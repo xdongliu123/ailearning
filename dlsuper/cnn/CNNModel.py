@@ -41,9 +41,6 @@ class CNNModel:
 
     def batch_gradient_descent_step(self, X, Y, lambd, learning_rate, t):
         A = self.forward_propagation(X)
-        print(A[:, 0])
-        print(A[:, 10])
-        print(A[:, 20])
         n = X.shape[-1]
         A1 = A == np.max(A, axis=0, keepdims=True)
         C = np.abs(A1 - Y)
