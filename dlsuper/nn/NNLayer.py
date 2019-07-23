@@ -22,14 +22,6 @@ class NNLinearLayer(GeneralLayer):
         self.initialize_method = initialize_method
         if pre_layer is not None:
             assert(self.shape[1] == pre_layer.shape[0])
-
-    def initialize_parameters(self, optimizer, beta, beta1, beta2, epsilon):
-        self.optimizer = optimizer
-        self.beta = beta
-        self.beta1 = beta1
-        self.beta2 = beta2
-        self.epsilon = epsilon
-
         if self.initialize_method == 'He':
             self.W = np.random.randn(self.shape[0], self.shape[1]) \
              * math.sqrt(2 / self.n_x)
@@ -40,20 +32,6 @@ class NNLinearLayer(GeneralLayer):
         else:
             self.W = np.random.randn(self.shape[0], self.shape[1])
             self.b = np.zeros((self.n_h, 1))
-
-        '''
-        Special infrastructure for optimizers:[Momentum, RMSprop, Adam]
-        '''
-        if self.optimizer == "momentum":
-            self.v_dW = np.zeros(self.W.shape)
-            self.v_db = np.zeros(self.b.shape)
-        elif self.optimizer == "adam":
-            self.v_dW = np.zeros(self.W.shape)
-            self.v_db = np.zeros(self.b.shape)
-            self.s_dW = np.zeros(self.W.shape)
-            self.s_db = np.zeros(self.b.shape)
-        else:
-            pass
 
     def forward_propagation(self, X, *kargs, **kwargs):
         self.X = X
@@ -67,23 +45,7 @@ class NNLinearLayer(GeneralLayer):
         self.dW = np.dot(dZ, self.X.T) / m + lambd * self.W / m
         self.db = np.sum(dZ, axis=1, keepdims=True) / m
 
-        if self.optimizer == "momentum":
-            self.v_dW = self.beta * self.v_dW + (1 - self.beta) * self.dW
-            self.v_db = self.beta * self.v_db + (1 - self.beta) * self.db
-        elif self.optimizer == "adam":
-            self.v_dW = self.beta1 * self.v_dW + (1 - self.beta1) * self.dW
-            self.v_db = self.beta1 * self.v_db + (1 - self.beta1) * self.db
-            self.v_dW_corrected = self.v_dW / (1 - np.power(self.beta1, t))
-            self.v_db_corrected = self.v_db / (1 - np.power(self.beta1, t))
-
-            self.s_dW = self.beta2 * self.s_dW + (1 - self.beta2) * \
-                np.power(self.dW, 2)
-            self.s_db = self.beta2 * self.s_db + (1 - self.beta2) * \
-                np.power(self.db, 2)
-            self.s_dW_corrected = self.s_dW / (1 - np.power(self.beta2, t))
-            self.s_db_corrected = self.s_db / (1 - np.power(self.beta2, t))
-        else:
-            pass
+        GeneralLayer.adjust_derivation_parameters(self, t)
         dX = np.dot(self.W.T, dZ)
         return dX
 

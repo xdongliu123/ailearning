@@ -37,10 +37,14 @@ def relu_derivative(x):
 def cost_for_onehot(A, Y, cost_type):
     m = A.shape[-1]
     total_cost = 0
+    eps = np.finfo(float).eps
     if cost_type == 'cross-entropy':
+        '''
         loss = np.multiply(np.log(A), Y) + \
                np.multiply((1 - Y), np.log(1 - A))
         total_cost = -np.sum(loss) / m
+        '''
+        total_cost = -np.sum(Y * np.log(A + eps))
     elif cost_type == 'rss':
         total_cost = np.dot((A - Y), (A - Y).T) / m
     elif cost_type == 'softmax-loss':
@@ -52,7 +56,8 @@ def cost_for_onehot(A, Y, cost_type):
 
 
 def grad_for_onehot(A, Y):
-    g = - (np.divide(Y, A) - np.divide(1 - Y, 1 - A))
+    eps = np.finfo(float).eps
+    g = - (np.divide(Y, A+eps) - np.divide(1 - Y, (1 - A + eps)))
     return g
 
 

@@ -13,13 +13,24 @@ class CNNModel:
 
     def fit(self, X, Y, learning_rate=1.2, iteration_count=1000, lambd=0,
             use_mini_batch=False, mini_batch_size=64, print_cost=True,
-            nn_optimizer="gd", nn_beta=0.9, nn_beta1=0.9, nn_beta2=0.999,
-            nn_epsilon=1e-8):
-        self.fc_pipe.initialize_parameters(nn_optimizer, nn_beta, nn_beta1,
-                                           nn_beta2, nn_epsilon)
-        batches = generate_batchs(X, Y, use_mini_batch, mini_batch_size, "cnn")
+            optimizer="adam", beta=0.9, beta1=0.9, beta2=0.999, epsilon=1e-8):
+        self.fc_pipe.initialize_parameters(optimizer, beta, beta1, beta2,
+                                           epsilon)
+        self.cnn_pipe.initialize_parameters(optimizer, beta, beta1, beta2,
+                                            epsilon)
+        n = Y.shape[1]
         t = 0
         for i in range(iteration_count):
+            if use_mini_batch:
+                order = np.arange(n)
+                np.random.shuffle(order)
+                X_input = X[:, :, :, order]
+                Y_input = Y[:, order]
+            else:
+                X_input = X[:, :, :, :]
+                Y_input = Y[:, :]
+            batches = generate_batchs(X_input, Y_input, use_mini_batch,
+                                      mini_batch_size, "cnn")
             for batch in batches:
                 t = t + 1
                 batch_X, batch_Y = batch
@@ -30,12 +41,13 @@ class CNNModel:
 
     def batch_gradient_descent_step(self, X, Y, lambd, learning_rate, t):
         A = self.forward_propagation(X)
+        print(A[:, 0])
+        print(A[:, 10])
+        print(A[:, 20])
         n = X.shape[-1]
         A1 = A == np.max(A, axis=0, keepdims=True)
         C = np.abs(A1 - Y)
         error = np.sum(C).astype(np.float32) / 2
-        if 1 - (error / n) < 0:
-            print(C.transpose(1, 0))
         print(1 - (error / n))
         # compute cost
         cost = cost_for_onehot(A, Y, self.cost_type)
@@ -48,6 +60,7 @@ class CNNModel:
     def forward_propagation(self, X):
         m = X.shape[-1]
         cnn_output = self.cnn_pipe.forward_propagation(X)
+        cnn_output = cnn_output.transpose(2, 0, 1, 3)
         self.cnn_output_shape = cnn_output.shape
         # flatten multi dim to 2 keepdims
         nn_input = cnn_output.reshape(-1, m)
@@ -58,6 +71,7 @@ class CNNModel:
         grad = grad_for_onehot(A, Y)
         grad_for_cnn = self.fc_pipe.back_propagation(grad, lambd, t)
         grad_for_cnn = grad_for_cnn.reshape(*(self.cnn_output_shape))
+        grad_for_cnn = grad_for_cnn.transpose(1, 2, 0, 3)
         self.cnn_pipe.back_propagation(grad_for_cnn, lambd, t)
 
     def update_parameters(self, learning_rate):

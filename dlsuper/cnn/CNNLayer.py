@@ -11,9 +11,14 @@ class CNNLayer(GeneralLayer):
         GeneralLayer.__init__(self, pre_layer)
         filter_width, filter_height, filter_channel = filter_size
         self.pad = pad
+        size = (filter_width, filter_height, filter_channel, filter_num)
+        stddev = 1.0 / np.sqrt(np.prod(size))
+        self.W = np.random.normal(loc=0, scale=stddev, size=size)
+        '''
         self.W = np.random.randn(filter_width, filter_height, filter_channel,
                                  filter_num)
-        self.b = np.random.randn(1, 1, 1, filter_num)
+        '''
+        self.b = np.zeros((1, 1, 1, filter_num))
         self.filter_size = filter_size
         self.filter_num = filter_num
         self.filter_stride = stride
@@ -55,8 +60,10 @@ class CNNLayer(GeneralLayer):
                         # bias b
                         Z[x, y, c, i] = np.sum(np.multiply(slice, W_c) + b_c)
         if self.activator == "tanh":
+            self.derivative = tanh_derivative(Z)
             Z = tanh(Z)
         elif self.activator == "relu":
+            self.derivative = relu_derivative(Z)
             Z = relu(Z)
         else:
             pass
@@ -65,17 +72,18 @@ class CNNLayer(GeneralLayer):
         return Z
 
     def back_propagation(self, dZ, *kargs, **kwargs):
+        # lambd = kargs[0]
+        t = kargs[1]
+
         z_width, z_height, filter_num, m = dZ.shape
         x_stride, y_stride = self.filter_stride
         filter_width, filter_height, filter_channel = self.filter_size
-
         if self.activator == "tanh":
-            dZ = tanh_derivative(self.Z) * dZ
+            dZ = self.derivative * dZ
         elif self.activator == "relu":
-            dZ = relu_derivative(self.Z) * dZ
+            dZ = self.derivative * dZ
         else:
             pass
-
         dX_pad = np.zeros(self.X_pad.shape)
         dW = np.zeros(self.W.shape)
         db = np.zeros(self.b.shape)
@@ -95,8 +103,10 @@ class CNNLayer(GeneralLayer):
                         dX_pad[x_start:x_end, y_start:y_end, :, i] += dx
                         dW[:, :, :, c] += (np.multiply(slice, dz))
                         db[:, :, :, c] += dz
-        self.dW = dW
-        self.db = db
+        self.dW = dW / m
+        self.db = db / m
+        GeneralLayer.adjust_derivation_parameters(self, t)
+
         x_left_pad, x_right_pad, y_top_pad, y_botm_pad = self.pad
         if x_right_pad == 0 and y_botm_pad == 0:
             d_X = dX_pad[x_left_pad:, y_top_pad:, :, :]
@@ -106,9 +116,17 @@ class CNNLayer(GeneralLayer):
             d_X = dX_pad[x_left_pad:-x_right_pad, y_top_pad:, :, :]
         else:
             d_X = dX_pad[x_left_pad:-x_right_pad, y_top_pad:-y_botm_pad, :, :]
-
         return d_X
 
     def update_parameters(self, learning_rate):
-        self.W = self.W - learning_rate * self.dW
-        self.b = self.b - learning_rate * self.db
+        if self.optimizer == "gd":
+            self.W = self.W - learning_rate * self.dW
+            self.b = self.b - learning_rate * self.db
+        elif self.optimizer == "momentum":
+            self.W = self.W - learning_rate * self.v_dW
+            self.b = self.b - learning_rate * self.v_db
+        elif self.optimizer == "adam":
+            self.W = self.W - learning_rate * self.v_dW / \
+                (np.sqrt(self.s_dW) + self.epsilon)
+            self.b = self.b - learning_rate * self.v_db / \
+                (np.sqrt(self.s_db) + self.epsilon)

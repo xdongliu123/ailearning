@@ -21,7 +21,7 @@ class NNModel:
     # optimizer:gd, momentum, adam
     def fit(self, X, Y, learning_rate=1.2, iteration_count=1000, lambd=0,
             keep_prob=1, use_mini_batch=False, mini_batch_size=64,
-            optimizer="gd", beta=0.9, beta1=0.9, beta2=0.999, epsilon=1e-8,
+            optimizer="adam", beta=0.9, beta1=0.9, beta2=0.999, epsilon=1e-8,
             print_cost=True):
         if self.normalization:
             norm = np.linalg.norm(X, axis=0, keepdims=True)
@@ -29,9 +29,19 @@ class NNModel:
         self.pipe.initialize_parameters(optimizer, beta, beta1, beta2, epsilon)
 
         # generare batches of gradient descent
-        batches = generate_batchs(X, Y, use_mini_batch, mini_batch_size)
         t = 0
+        n = Y.shape[1]
         for i in range(iteration_count):
+            if use_mini_batch:
+                order = np.arange(n)
+                np.random.shuffle(order)
+                X_input = X[:, :, :, order]
+                Y_input = Y[:, order]
+            else:
+                X_input = X[:, :, :, :]
+                Y_input = Y[:, :]
+            batches = generate_batchs(X_input, Y_input, use_mini_batch,
+                                      mini_batch_size)
             for batch in batches:
                 t = t + 1
                 batch_X, batch_Y = batch
