@@ -5,6 +5,52 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
+def max_pool_forward_naive(x, pool_param):
+    """
+    A naive implementation of the forward pass for a max pooling layer.
+    Inputs:
+    - x: Input data, of shape (N, C, H, W)
+    - pool_param: dictionary with the following keys:
+      - 'pool_height': The height of each pooling region
+      - 'pool_width': The width of each pooling region
+      - 'stride': The distance between adjacent pooling regions
+    Returns a tuple of:
+    - out: Output data
+    - cache: (x, pool_param)
+    """
+    N, C, H, W = x.shape
+    HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    Hn = 1 + int((H - HH) / stride)
+    Wn = 1 + int((W - WW) / stride)
+    out = np.zeros((N, C, Hn, Wn))
+    for i in range(Hn):
+        for j in range(Wn):
+            out[..., i, j] = np.max(x[..., i*stride:i*stride+HH, j*stride:j*stride+WW], axis=(2,3))
+    cache = (x, out, pool_param)
+    return out, cache
+
+
+def max_pool_backward_naive(dout, cache):
+    """
+    A naive implementation of the backward pass for a max pooling layer.
+    Inputs:
+    - dout: Upstream derivatives
+    - cache: A tuple of (x, pool_param) as in the forward pass.
+    Returns:
+    - dx: Gradient with respect to x
+    """
+    x, out, pool_param = cache
+    N, C, Hn, Wn = dout.shape
+    HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    dx = np.zeros_like(x)
+    for i in range(Hn):
+        for j in range(Wn):
+            #(N, C, HH, WW) vs (N, C)
+            mark = x[..., i*stride:i*stride+HH, j*stride:j*stride+WW] == out[..., i, j][..., np.newaxis, np.newaxis]
+            #(N, C, HH, WW) vs (N, C)
+            dx[..., i*stride:i*stride+HH, j*stride:j*stride+WW] = mark * dout[..., i, j][..., np.newaxis, np.newaxis]   
+    return dx
+
 def load_dataset():
     train_dataset = h5py.File('datasets/train_signs.h5', "r")
     train_set_x_orig = np.array(train_dataset["train_set_x"][:]) # your train set features

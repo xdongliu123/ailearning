@@ -1,6 +1,39 @@
 import numpy as np
 
 
+# activator functions
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+
+def sigmoid_derivative(x):
+    s = sigmoid(x)
+    ds = s * (1 - s)
+    return ds
+
+
+def tanh(x):
+    return np.tanh(x)
+
+
+def tanh_derivative(x):
+    t = tanh(x)
+    dt = 1 - np.power(t, 2)
+    return dt
+
+
+def relu(x):
+    r = np.maximum(0, x)
+    return r
+
+
+def relu_derivative(x):
+    dr = np.ones(x.shape)
+    dr[x <= 0] = 0
+    return dr
+
+
+# softmax relevant
 def softmax(x):
     x_exp = np.exp(x - np.max(x, axis=0, keepdims=True))
     # + 1e-11
