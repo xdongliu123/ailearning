@@ -22,7 +22,7 @@ class Activator(GeneralLayer):
             pass
         return self.A
 
-    def back_propagation(self, dA):
+    def back_propagation(self, dA, l1_lambd, l2_lambd):
         if self.activator == "sigmoid":
             dX = sigmoid_derivative(self.X) * dA
         elif self.activator == "tanh":

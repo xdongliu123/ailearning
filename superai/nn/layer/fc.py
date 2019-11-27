@@ -22,9 +22,19 @@ class FullyConnected(GeneralLayer):
         self.Z = np.dot(self.W, X) + self.b
         return self.Z
 
-    def back_propagation(self, dZ):
+    def back_propagation(self, dZ, l1_lambd, l2_lambd):
         self.dW = np.dot(dZ, self.X.T)
+
+        m = dZ.shape[-1]
+        # consider l1 regularization
+        self.dW += l1_lambd * self.W / ((np.abs(self.W) + 1e-8) * m)
+        # consider l2 regularization
+        self.dW += (l2_lambd * self.W) / m
+
         self.db = np.sum(dZ, axis=1, keepdims=True)
         self.grads = [self.dW, self.db]
         dX = np.dot(self.W.T, dZ)
         return dX
+
+    def regularization_cost(self, l1_lambd, l2_lambd):
+        return 0.5 * l2_lambd * np.sum(self.W * self.W) + l1_lambd * np.sum(np.abs(self.W))

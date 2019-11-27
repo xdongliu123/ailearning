@@ -42,7 +42,7 @@ class Conv(GeneralLayer):
         self.Z = Z.reshape(self.filter_num, out_h, out_w, m)
         return self.Z
 
-    def back_propagation(self, dZ):
+    def back_propagation(self, dZ, l1_lambd, l2_lambd):
         out_c, out_h, out_w,  m = dZ.shape
         h_s, w_s = self.filter_stride
         f_c, f_h, f_w = self.filter_size
@@ -55,6 +55,12 @@ class Conv(GeneralLayer):
 
         dW = dZ_cols @ self.cols.T
         self.dW = dW.reshape(self.W.shape)
+
+        # consider l1 regularization
+        self.dW += l1_lambd * self.W / ((np.abs(self.W) + 1e-8) * m)
+        # consider l2 regularization
+        self.dW += (l2_lambd * self.W) / m
+
         self.db = np.sum(dZ, axis=(1, 2, 3)).reshape(self.filter_num, -1)
         self.grads = [self.dW, self.db]
 
@@ -62,6 +68,9 @@ class Conv(GeneralLayer):
         dX = dX[:, h_top_pad:None if h_bottom_pad == 0 else -h_bottom_pad,
                 w_left_pad:None if w_right_pad == 0 else -w_right_pad, :]
         return dX
+
+    def regularization_cost(self, l1_lambd, l2_lambd):
+        return 0.5 * l2_lambd * np.sum(self.W * self.W) + l1_lambd * np.sum(np.abs(self.W))
     '''
     # teach version for easy understanding
     # very slow

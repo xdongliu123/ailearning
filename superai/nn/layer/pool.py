@@ -41,7 +41,7 @@ class PoolingLayer(GeneralLayer):
         out = out.reshape(out_h, out_w, m, c).transpose(3, 0, 1, 2)
         return out
 
-    def back_propagation(self, dA):
+    def back_propagation(self, dA, l1_lambd, l2_lambd):
         c, out_h, out_w, m = dA.shape
         f_h, f_w = self.filter_size
         h_s, w_s = self.stride
@@ -88,7 +88,7 @@ class PoolingLayer(GeneralLayer):
                             pass
         return A
 
-    def back_propagation(self, dA):
+    def back_propagation(self, dA, l1_lambd, l2_lambd):
         c, h, w, m = dA.shape
         dZ = np.zeros(self.X_pad.shape)
         f_h, f_w = self.filter_size

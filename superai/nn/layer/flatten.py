@@ -12,6 +12,6 @@ class Flatten(GeneralLayer):
         output = X.reshape(-1, m)
         return output
 
-    def back_propagation(self, dout):
+    def back_propagation(self, dout, l1_lambd, l2_lambd):
         grad = dout.reshape(*(self.input_shape))
         return grad
