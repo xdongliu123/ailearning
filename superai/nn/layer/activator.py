@@ -1,5 +1,5 @@
 from .generic import GeneralLayer
-from ..common.math import sigmoid, sigmoid_derivative, tanh, tanh_derivative,\
+from superai.common.math import sigmoid, sigmoid_derivative, tanh, tanh_derivative,\
     relu, relu_derivative, softmax, softmax_derivative
 
 

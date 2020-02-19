@@ -1,9 +1,5 @@
 from ..common.utils import generate_batchs
-from ..common.loss import softmaxloss, softmax, accuracy
-
-
-class Model:
-    pass
+from superai.common.loss import softmaxloss, softmax, accuracy
 
 
 class Sequence:

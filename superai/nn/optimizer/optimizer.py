@@ -1,6 +1,5 @@
 import abc
 from ..common.utils import generate_batchs
-from ..common.loss import softmaxloss, softmax, accuracy
 
 
 class Optimizer(metaclass=abc.ABCMeta):

@@ -8,8 +8,7 @@ def sigmoid(z):
 
 def sigmoid_derivative(x):
     s = sigmoid(x)
-    ds = s * (1 - s)
-    return ds
+    return s * (1 - s)
 
 
 def tanh(x):
@@ -18,13 +17,11 @@ def tanh(x):
 
 def tanh_derivative(x):
     t = tanh(x)
-    dt = 1 - np.power(t, 2)
-    return dt
+    return 1 - np.power(t, 2)
 
 
 def relu(x):
-    r = np.maximum(0, x)
-    return r
+    return np.maximum(0, x)
 
 
 def relu_derivative(x):
